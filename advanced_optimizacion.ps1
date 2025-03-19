@@ -1,157 +1,204 @@
-# Advanced System Optimization Script for Windows
-
-# Path to configuration files
-$configPath = "$env:APPDATA\AdvancedOptimizer"
-$processConfigFile = "$configPath\processes.json"
-$prefetchConfigFile = "$configPath\prefetch.json"
-$resourcesConfigFile = "$configPath\resources.json"
-$systemIssuesLogFile = "$configPath\system_issues.log"
-$wifiConfigFile = "$configPath\wifi.json"
-$servicesConfigFile = "$configPath\services.json"
-$securityConfigFile = "$configPath\security.json"
-$performanceReportFile = "$configPath\performance_report.json"
-$antivirusConfigFile = "$configPath\antivirus.json"
-
-# Create config directory if it doesn't exist
-if (-Not (Test-Path $configPath)) {
-    New-Item -ItemType Directory -Path $configPath | Out-Null
+# Verificar permisos de administrador
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Ejecuta este script como Administrador." -ForegroundColor Red
+    exit
 }
 
-# Define essential processes and unnecessary processes
-$essentialProcesses = @("explorer.exe", "python.exe", "svchost.exe")
-$unnecessaryProcesses = @("some_unnecessary_process.exe")
+# Función para centrar texto
+function CenterText {
+    param (
+        [string]$text
+    )
+    $width = [System.Console]::WindowWidth
+    $padLeft = ($width - $text.Length) / 2
+    return $text.PadLeft($padLeft + $text.Length)
+}
 
-# Function to monitor and close unnecessary processes
-function Optimize-Processes {
-    $processes = Get-Process
-    foreach ($process in $processes) {
-        if ($unnecessaryProcesses -contains $process.Name -and -Not ($essentialProcesses -contains $process.Name)) {
-            Stop-Process -Id $process.Id -Force
+# Configuraciones persistentes
+$configFilePath = "$env:USERPROFILE\advanced_optimizer_config.json"
+
+if (-Not (Test-Path $configFilePath)) {
+    $config = @{
+        WhitelistProcesses = @("explorer.exe", "python.exe", "svchost.exe")
+        BlacklistProcesses = @()
+        PrefetchApps = @()
+        AntivirusPriority = "normal"
+        WifiSettings = @{}
+        DisabledServices = @()
+        SecuritySettings = @{}
+        PerformanceLogs = @()
+    }
+    $config | ConvertTo-Json | Set-Content $configFilePath
+} else {
+    $config = Get-Content $configFilePath | ConvertFrom-Json
+}
+
+# Función para monitorear y gestionar procesos
+function MonitorProcesses {
+    while ($true) {
+        $allProcesses = Get-Process | Where-Object { $_.ProcessName -notin $config.WhitelistProcesses }
+        foreach ($process in $allProcesses) {
+            if ($process.ProcessName -in $config.BlacklistProcesses) {
+                Stop-Process -Name $process.ProcessName -Force
+            }
         }
+        Start-Sleep -Seconds 60
     }
-    # Save process configurations
-    $processConfig = @{
-        EssentialProcesses = $essentialProcesses
-        UnnecessaryProcesses = $unnecessaryProcesses
-    }
-    $processConfig | ConvertTo-Json | Set-Content $processConfigFile
 }
 
-# Function to implement prefetching and caching
-function Optimize-AppOpening {
-    # Logic for prefetching and caching
-    # Placeholder for machine learning model to predict app usage
-    # Save prefetch configurations
-    $prefetchConfig = @{
-        PrefetchSettings = "Placeholder for prefetch settings"
+# Función para optimizar la apertura de aplicaciones
+function OptimizeAppOpening {
+    while ($true) {
+        foreach ($app in $config.PrefetchApps) {
+            Start-Process $app
+            Start-Sleep -Seconds 10
+        }
+        Start-Sleep -Minutes 15
     }
-    $prefetchConfig | ConvertTo-Json | Set-Content $prefetchConfigFile
 }
 
-# Function to manage antivirus resource allocation
-function Optimize-Antivirus {
-    # Logic to monitor and adjust resources for antivirus programs
-    # Save resources configurations
-    $resourcesConfig = @{
-        AntivirusResources = "Placeholder for antivirus resources settings"
+# Función para gestionar recursos de antivirus
+function ManageAntivirusResources {
+    while ($true) {
+        $antivirusProcesses = Get-Process | Where-Object { $_.ProcessName -match "antivirus" }
+        foreach ($process in $antivirusProcesses) {
+            if ($config.AntivirusPriority -eq "high") {
+                $process.PriorityClass = "High"
+            } else {
+                $process.PriorityClass = "Normal"
+            }
+        }
+        Start-Sleep -Seconds 60
     }
-    $resourcesConfig | ConvertTo-Json | Set-Content $resourcesConfigFile
 }
 
-# Function to diagnose and repair system issues
-function Diagnose-SystemIssues {
-    # Logic to diagnose and repair system issues
-    # Save system issues log
-    $systemIssuesLog = "Placeholder for system issues log"
-    $systemIssuesLog | Out-File $systemIssuesLogFile -Append
-}
-
-# Function to monitor and maintain Wi-Fi connection
-function Monitor-WiFi {
-    # Logic to monitor and maintain Wi-Fi connection
-    # Save Wi-Fi configurations
-    $wifiConfig = @{
-        WiFiSettings = "Placeholder for Wi-Fi settings"
+# Función para diagnósticos automáticos
+function AutoDiagnostics {
+    while ($true) {
+        # Simulación de diagnóstico
+        Write-Host "Ejecutando diagnóstico del sistema..."
+        Start-Sleep -Minutes 60
     }
-    $wifiConfig | ConvertTo-Json | Set-Content $wifiConfigFile
 }
 
-# Function to disable unused services and activate them temporarily
-function Manage-Services {
-    # Logic to disable unused services and activate them temporarily
-    # Save services configurations
-    $servicesConfig = @{
-        ServicesSettings = "Placeholder for services settings"
+# Función para deshabilitar servicios no utilizados
+function DisableUnusedServices {
+    foreach ($service in $config.DisabledServices) {
+        Stop-Service -Name $service -Force
+        Set-Service -Name $service -StartupType Disabled
     }
-    $servicesConfig | ConvertTo-Json | Set-Content $servicesConfigFile
 }
 
-# Function to implement advanced security measures
-function Enhance-Security {
-    # Logic to implement advanced security measures
-    # Save security configurations
-    $securityConfig = @{
-        SecuritySettings = "Placeholder for security settings"
+# Función para configurar la seguridad del sistema
+function ConfigureSecurity {
+    # Configuración de Firewall y otras medidas de seguridad
+    Write-Host "Configurando seguridad del sistema..."
+}
+
+# Función para actualizar y monitorear el sistema
+function UpdateAndMonitor {
+    while ($true) {
+        # Simulación de actualización
+        Write-Host "Actualizando el sistema y monitoreando el rendimiento..."
+        Start-Sleep -Hours 24
     }
-    $securityConfig | ConvertTo-Json | Set-Content $securityConfigFile
 }
 
-# Function to monitor system performance and provide feedback
-function Monitor-Performance {
-    # Logic to monitor system performance and provide feedback
-    # Save performance report
-    $performanceReport = @{
-        PerformanceData = "Placeholder for performance data"
-    }
-    $performanceReport | ConvertTo-Json | Set-Content $performanceReportFile
-}
-
-# Function to integrate optimized antivirus
-function Integrate-Antivirus {
-    # Logic to integrate optimized antivirus
-    # Save antivirus configurations
-    $antivirusConfig = @{
-        AntivirusSettings = "Placeholder for antivirus settings"
-    }
-    $antivirusConfig | ConvertTo-Json | Set-Content $antivirusConfigFile
-}
-
-# Function to display menu and execute selected optimizations
+# Mostrar menú principal
 function Show-Menu {
-    $menu = @"
-[1] Optimizar procesos
-[2] Acelerar apertura de aplicaciones
-[3] Gestionar recursos asignados a antivirus
-[4] Diagnosticar y reparar problemas del sistema
-[5] Monitorear y mantener conexión Wi-Fi
-[6] Deshabilitar servicios no utilizados y activarlos temporalmente
-[7] Implementar medidas de seguridad avanzadas
-[8] Monitorear rendimiento del sistema
-[9] Integrar antivirus optimizado
-[10] Salir
-Elija una opción del menú usando su teclado [1-10]:
-"@
+    Clear-Host
+    Write-Host ""
+    Write-Host (CenterText "=============================================") -ForegroundColor Cyan
+    Write-Host (CenterText " Advanced Windows 11 Optimization Tool ") -ForegroundColor Green
+    Write-Host (CenterText "=============================================") -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host (CenterText "[1] Eliminar Bloatware")
+    Write-Host (CenterText "[2] Desactivar Servicios Innecesarios")
+    Write-Host (CenterText "[3] Optimizar Procesos y Subprocesos")
+    Write-Host (CenterText "[4] Limpiar Archivos Temporales")
+    Write-Host (CenterText "[5] Activar Windows y Office")
+    Write-Host (CenterText "[6] Mostrar Estado del Sistema")
+    Write-Host (CenterText "[7] Restaurar Configuración por Defecto")
+    Write-Host (CenterText "[8] Actualizar Sistema")
+    Write-Host (CenterText "[9] Configurar Seguridad")
+    Write-Host (CenterText "[0] Salir")
+    Write-Host ""
+    Write-Host (CenterText "=============================================") -ForegroundColor Cyan
+    $option = Read-Host (CenterText "Elige una opción [1,2,3,4,5,6,7,8,9,0]")
+    return $option
+}
 
-    Write-Host $menu
-    $choice = Read-Host "Ingrese su elección (1-10)"
+# Funciones básicas de optimización
+function Remove-Bloatware {
+    Write-Host (CenterText "Eliminando Bloatware...") -ForegroundColor Yellow
+    .\debloat.ps1
+}
 
-    switch ($choice) {
-        1 { Optimize-Processes }
-        2 { Optimize-AppOpening }
-        3 { Optimize-Antivirus }
-        4 { Diagnose-SystemIssues }
-        5 { Monitor-WiFi }
-        6 { Manage-Services }
-        7 { Enhance-Security }
-        8 { Monitor-Performance }
-        9 { Integrate-Antivirus }
-        10 { exit }
-        default { Write-Host "Opción inválida, intente de nuevo." }
+function Disable-Services {
+    Write-Host (CenterText "Desactivando Servicios Innecesarios...") -ForegroundColor Yellow
+    $services = @("DiagTrack", "dmwappushservice", "WSearch", "Fax", "XblGameSave", "XboxNetApiSvc", "RetailDemo", "MapsBroker", "WalletService")
+    foreach ($service in $services) {
+        Stop-Service -Name $service -Force
+        Set-Service -Name $service -StartupType Disabled
     }
 }
 
-# Main loop
-while ($true) {
-    Show-Menu
-    Start-Sleep -Seconds 5
+function Optimize-Processes {
+    Write-Host (CenterText "Optimizando Procesos y Subprocesos...") -ForegroundColor Yellow
+    Start-Job -ScriptBlock { MonitorProcesses }
+    Start-Job -ScriptBlock { OptimizeAppOpening }
+    Start-Job -ScriptBlock { ManageAntivirusResources }
 }
+
+function Clean-TempFiles {
+    Write-Host (CenterText "Limpiando Archivos Temporales...") -ForegroundColor Yellow
+    Get-ChildItem -Path "C:\Windows\Temp","C:\Users\$env:UserName\AppData\Local\Temp" -Recurse -Force | Remove-Item -Force -Recurse
+    Write-Host (CenterText "Archivos temporales limpiados.") -ForegroundColor Green
+}
+
+function Activate-WindowsOffice {
+    Write-Host (CenterText "Activando Windows y Office...") -ForegroundColor Yellow
+    .\activate.ps1
+}
+
+function Show-SystemStatus {
+    Write-Host (CenterText "Estado del Sistema:") -ForegroundColor Cyan
+    Get-ComputerInfo | Select-Object CsName, OsName, WindowsVersion, OsArchitecture, CsTotalPhysicalMemory
+}
+
+function Restore-Defaults {
+    Write-Host (CenterText "Restaurando configuración original...") -ForegroundColor Yellow
+    .\restore.ps1
+}
+
+function Update-System {
+    Write-Host (CenterText "Actualizando el sistema y software...") -ForegroundColor Yellow
+    Install-Module PSWindowsUpdate -Force -SkipPublisherCheck
+    Import-Module PSWindowsUpdate
+    Get-WindowsUpdate -Install -AcceptAll -AutoReboot
+}
+
+function Configure-Security {
+    Write-Host (CenterText "Configurando las políticas de seguridad...") -ForegroundColor Yellow
+    # Configuración de seguridad detallada aquí
+    ConfigureSecurity
+}
+
+# Menú principal
+do {
+    $choice = Show-Menu
+    switch ($choice) {
+        "1" { Remove-Bloatware }
+        "2" { Disable-Services }
+        "3" { Optimize-Processes }
+        "4" { Clean-TempFiles }
+        "5" { Activate-WindowsOffice }
+        "6" { Show-SystemStatus }
+        "7" { Restore-Defaults }
+        "8" { Update-System }
+        "9" { Configure-Security }
+        "0" { exit }
+        default { Write-Host (CenterText "Opción no válida, intenta de nuevo.") -ForegroundColor Red }
+    }
+    Pause
+} while ($choice -ne "0")
