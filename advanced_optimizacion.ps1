@@ -119,17 +119,17 @@ function Integrate-Antivirus {
 # Function to display menu and execute selected optimizations
 function Show-Menu {
     $menu = @"
-Seleccione la optimización que desea ejecutar:
-1. Optimizar procesos
-2. Acelerar apertura de aplicaciones
-3. Gestionar recursos asignados a antivirus
-4. Diagnosticar y reparar problemas del sistema
-5. Monitorear y mantener conexión Wi-Fi
-6. Deshabilitar servicios no utilizados y activarlos temporalmente
-7. Implementar medidas de seguridad avanzadas
-8. Monitorear rendimiento del sistema
-9. Integrar antivirus optimizado
-10. Salir
+[1] Optimizar procesos
+[2] Acelerar apertura de aplicaciones
+[3] Gestionar recursos asignados a antivirus
+[4] Diagnosticar y reparar problemas del sistema
+[5] Monitorear y mantener conexión Wi-Fi
+[6] Deshabilitar servicios no utilizados y activarlos temporalmente
+[7] Implementar medidas de seguridad avanzadas
+[8] Monitorear rendimiento del sistema
+[9] Integrar antivirus optimizado
+[10] Salir
+Elija una opción del menú usando su teclado [1-10]:
 "@
 
     Write-Host $menu
