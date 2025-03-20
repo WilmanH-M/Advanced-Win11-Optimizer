@@ -75,8 +75,78 @@ $chkcmd = & $env:ComSpec /c "echo CMD is working"
 if ($chkcmd -notcontains "CMD is working") {
     Write-Warning "cmd.exe is not working.`nReport this issue at $troubleshoot"
 }
-saps -FilePath $env:ComSpec -ArgumentList "/c """"$FilePath"" $args""" -Wait
+Start-Process -FilePath $env:ComSpec -ArgumentList "/c `"$FilePath`" $args" -Wait -NoNewWindow
 CheckFile $FilePath
 
 $FilePaths = @("$env:SystemRoot\Temp\MAS*.cmd", "$env:USERPROFILE\AppData\Local\Temp\MAS*.cmd")
-foreach ($FilePath in $FilePaths) { Get-Item $FilePath | Remove-Item }
+foreach ($FilePath in $FilePaths) { Remove-Item -Path $FilePath -Force -ErrorAction SilentlyContinue }
+
+# Optimizations
+function OptimizeSystem {
+    # Reduce unnecessary processes
+    Write-Host "Reducing unnecessary processes..." -ForegroundColor Yellow
+    $whitelist = @("explorer.exe", "svchost.exe", "lsass.exe", "services.exe", "wininit.exe")
+    Get-Process | Where-Object { $_.ProcessName -notin $whitelist } | ForEach-Object { Stop-Process -Name $_.ProcessName -Force }
+
+    # Set unnecessary services to manual
+    Write-Host "Setting unnecessary services to manual..." -ForegroundColor Yellow
+    $services = @("DiagTrack", "dmwappushservice", "WSearch", "Fax", "XblGameSave", "XboxNetApiSvc", "RetailDemo", "MapsBroker", "WalletService")
+    foreach ($service in $services) {
+        Set-Service -Name $service -StartupType Manual
+    }
+
+    # Optimize Wi-Fi settings
+    Write-Host "Optimizing Wi-Fi settings..." -ForegroundColor Green
+    netsh wlan set autoconfig enabled=no interface="Wi-Fi"
+    netsh wlan set autoconfig enabled=yes interface="Wi-Fi"
+}
+
+# Repair system
+function RepairSystem {
+    Write-Host "Repairing system..." -ForegroundColor Cyan
+    sfc /scannow
+    DISM /Online /Cleanup-Image /RestoreHealth
+}
+
+# Activate Windows and Office
+function ActivateWindowsOffice {
+    param (
+        [int]$days
+    )
+    Write-Host "Activating Windows and Office for $days days..." -ForegroundColor Yellow
+    .\activate.ps1 $days
+}
+
+# Main menu
+function Show-Menu {
+    Clear-Host
+    Write-Host ""
+    Write-Host (CenterText "=============================================") -ForegroundColor Cyan
+    Write-Host (CenterText " Advanced Windows 11 Optimization Tool ") -ForegroundColor Green
+    Write-Host (CenterText "=============================================") -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host (CenterText "[1] Optimize System") -ForegroundColor White
+    Write-Host (CenterText "[2] Repair System") -ForegroundColor White
+    Write-Host (CenterText "[3] Activate Windows and Office") -ForegroundColor White
+    Write-Host (CenterText "[4] Exit") -ForegroundColor White
+    Write-Host ""
+    Write-Host (CenterText "=============================================") -ForegroundColor Cyan
+    $option = Read-Host (CenterText "Choose an option [1,2,3,4]")
+    return $option
+}
+
+# Main loop
+do {
+    $choice = Show-Menu
+    switch ($choice) {
+        "1" { OptimizeSystem }
+        "2" { RepairSystem }
+        "3" {
+            $days = Read-Host "Enter the number of days to activate Windows and Office"
+            ActivateWindowsOffice -days $days
+        }
+        "4" { exit }
+        default { Write-Host (CenterText "Invalid option, please try again.") -ForegroundColor Red }
+    }
+    Pause
+} while ($choice -ne "4")
