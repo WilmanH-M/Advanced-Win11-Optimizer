@@ -1,3 +1,5 @@
+# This script is hosted on https://get.activated.win
+
 $troubleshoot = 'https://get.activated.win'
 if ($ExecutionContext.SessionState.LanguageMode.value__ -ne 0) {
     $ExecutionContext.SessionState.LanguageMode
@@ -5,6 +7,22 @@ if ($ExecutionContext.SessionState.LanguageMode.value__ -ne 0) {
     Write-Host "Help - https://gravesoft.dev/fix_powershell" -ForegroundColor White -BackgroundColor Blue
     return
 }
+# Preguntar qué activar
+$opcion = Read-Host "¿Qué deseas activar? (1: Windows, 2: Office, 3: Ambos)"
+$dias = Read-Host "Ingresa el número de días para la activación (ejemplo: 180)"
+
+# Activar según la elección del usuario
+if ($opcion -eq "1" -or $opcion -eq "3") {
+    Write-Host "Activando Windows por $dias días..."
+    Start-Process -FilePath "cmd.exe" -ArgumentList "/c `""cscript.exe`" `"%SystemRoot%\System32\slmgr.vbs`" /rearm && `""cscript.exe`" `"%SystemRoot%\System32\slmgr.vbs`" /skms kms8.msguides.com && `""cscript.exe`" `"%SystemRoot%\System32\slmgr.vbs`" /act && `""cscript.exe`" `"%SystemRoot%\System32\slmgr.vbs`" /xpr"" -Wait -NoNewWindow
+}
+
+if ($opcion -eq "2" -or $opcion -eq "3") {
+    Write-Host "Activando Office por $dias días..."
+    Start-Process -FilePath "cmd.exe" -ArgumentList "/c `""cscript.exe`" `"%ProgramFiles%\Microsoft Office\Office16\ospp.vbs`" /sethst:kms8.msguides.com && `""cscript.exe`" `"%ProgramFiles%\Microsoft Office\Office16\ospp.vbs`" /act"" -Wait -NoNewWindow
+}
+
+Write-Host "Proceso de activación completado."
 
 function Check3rdAV {
     $avList = Get-CimInstance -Namespace root\SecurityCenter2 -Class AntiVirusProduct | Where-Object { $_.displayName -notlike '*windows*' } | Select-Object -ExpandProperty displayName
