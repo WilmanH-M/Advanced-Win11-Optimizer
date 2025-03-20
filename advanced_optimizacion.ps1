@@ -1,9 +1,4 @@
-# Check massgrave.dev for more details
-
-write-host
-Write-Host "The current command (irm https://massgrave.dev/get | iex) will be retired in the future."
-Write-Host -ForegroundColor Green "Use the new command (irm https://get.activated.win | iex) moving forward."
-write-host
+# This script is hosted on https://get.activated.win for https://massgrave.dev
 
 $troubleshoot = 'https://massgrave.dev/troubleshoot'
 if ($ExecutionContext.SessionState.LanguageMode.value__ -ne 0) {
@@ -14,7 +9,9 @@ if ($ExecutionContext.SessionState.LanguageMode.value__ -ne 0) {
 }
 
 function Check3rdAV {
-    $avList = Get-CimInstance -Namespace root\SecurityCenter2 -Class AntiVirusProduct | Where-Object { $_.displayName -notlike '*windows*' } | Select-Object -ExpandProperty displayName
+    $avList = Get-CimInstance -Namespace root\SecurityCenter2 -Class AntiVirusProduct |
+              Where-Object { $_.displayName -notlike '*windows*' } |
+              Select-Object -ExpandProperty displayName
     if ($avList) {
         Write-Host '3rd party Antivirus might be blocking the script - ' -ForegroundColor White -BackgroundColor Blue -NoNewline
         Write-Host " $($avList -join ', ')" -ForegroundColor DarkRed -BackgroundColor White
@@ -39,7 +36,12 @@ $URLs = @(
 )
 
 foreach ($URL in $URLs | Sort-Object { Get-Random }) {
-    try { $response = Invoke-WebRequest -Uri $URL -UseBasicParsing; break } catch {}
+    try {
+        $response = Invoke-WebRequest -Uri $URL -UseBasicParsing
+        break
+    } catch {
+        Write-Host "Failed to retrieve MAS from $URL"
+    }
 }
 
 if (-not $response) {
@@ -53,37 +55,38 @@ if (-not $response) {
 $releaseHash = '919F17B46BF62169E8811201F75EFDF1D5C1504321B78A7B0FB47C335ECBC1B0'
 $stream = New-Object IO.MemoryStream
 $writer = New-Object IO.StreamWriter $stream
-$writer.Write($response)
+$writer.Write($response.Content)
 $writer.Flush()
 $stream.Position = 0
 $hash = [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($stream)) -replace '-'
 if ($hash -ne $releaseHash) {
     Write-Warning "Hash ($hash) mismatch, aborting!`nReport this issue at $troubleshoot"
-    $response = $null
     return
 }
 
 # Check for AutoRun registry which may create issues with CMD
 $paths = "HKCU:\SOFTWARE\Microsoft\Command Processor", "HKLM:\SOFTWARE\Microsoft\Command Processor"
-foreach ($path in $paths) { 
-    if (Get-ItemProperty -Path $path -Name "Autorun" -ErrorAction SilentlyContinue) { 
+foreach ($path in $paths) {
+    if (Get-ItemProperty -Path $path -Name "Autorun" -ErrorAction SilentlyContinue) {
         Write-Warning "Autorun registry found, CMD may crash! `nManually copy-paste the below command to fix...`nRemove-ItemProperty -Path '$path' -Name 'Autorun'"
-    } 
+    }
 }
 
 $rand = [Guid]::NewGuid().Guid
 $isAdmin = [bool]([Security.Principal.WindowsIdentity]::GetCurrent().Groups -match 'S-1-5-32-544')
 $FilePath = if ($isAdmin) { "$env:SystemRoot\Temp\MAS_$rand.cmd" } else { "$env:USERPROFILE\AppData\Local\Temp\MAS_$rand.cmd" }
-Set-Content -Path $FilePath -Value "@::: $rand `r`n$response"
+Set-Content -Path $FilePath -Value "@::: $rand `r`n$response.Content"
 CheckFile $FilePath
 
 $env:ComSpec = "$env:SystemRoot\system32\cmd.exe"
 $chkcmd = & $env:ComSpec /c "echo CMD is working"
 if ($chkcmd -notcontains "CMD is working") {
     Write-Warning "cmd.exe is not working.`nReport this issue at $troubleshoot"
+    return
 }
-saps -FilePath $env:ComSpec -ArgumentList "/c """"$FilePath"" $args""" -Wait
+
+Start-Process -FilePath $env:ComSpec -ArgumentList "/c `"$FilePath`" $args" -Wait -NoNewWindow
 CheckFile $FilePath
 
 $FilePaths = @("$env:SystemRoot\Temp\MAS*.cmd", "$env:USERPROFILE\AppData\Local\Temp\MAS*.cmd")
-foreach ($FilePath in $FilePaths) { Get-Item $FilePath | Remove-Item }
+foreach ($FilePath in $FilePaths) { Remove-Item -Path $FilePath -Force -ErrorAction SilentlyContinue }
