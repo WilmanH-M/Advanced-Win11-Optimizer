@@ -75,4 +75,4 @@ CheckFile $FilePath
 $FilePaths = @("$env:SystemRoot\Temp\MAS*.cmd", "$env:USERPROFILE\AppData\Local\Temp\MAS*.cmd")
 foreach ($FilePath in $FilePaths) { Get-Item $FilePath | Remove-Item }
 
-Pero con las modificaciones que te he pedido, esto detendrá la ejecución del otro comando.
+Ahora el script debería ejecutarse correctamente sin el error relacionado con el término 'Pero'.
