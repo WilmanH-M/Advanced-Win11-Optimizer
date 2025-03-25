@@ -108,14 +108,31 @@ if ($chkcmd -notcontains "CMD is working") {
     Write-Warning "cmd.exe is not working.`nReport this issue at $troubleshoot"
 }
 
-# Lee la cantidad de días para activar Windows
-$dias = Read-Host -Prompt "Ingrese la cantidad de días para activar Windows"
+# Menú principal
+Write-Host "Menú principal" -ForegroundColor Cyan
+Write-Host "1. Activar Windows" -ForegroundColor Green
+Write-Host "2. Activar Office" -ForegroundColor Green
+Write-Host "3. Salir" -ForegroundColor Red
 
-# Activa Windows durante el período de tiempo especificado
-activar_windows $dias
+# Lee la opción seleccionada por el usuario
+$opcion = Read-Host -Prompt "Ingrese la opción que desea seleccionar"
 
-# Lee la cantidad de días para activar Office
-$dias_office = Read-Host -Prompt "Ingrese la cantidad de días para activar Office"
-
-# Activa Office durante el período de tiempo especificado
-activar_office $dias_office
+# Procesa la opción seleccionada por el usuario
+if ($opcion -eq 1) {
+    # Lee la cantidad de días para activar Windows
+    $dias = Read-Host -Prompt "Ingrese la cantidad de días para activar Windows"
+    # Activa Windows durante el período de tiempo especificado
+    activar_windows $dias
+} elseif ($opcion -eq 2) {
+    # Lee la cantidad de días para activar Office
+    $dias_office = Read-Host -Prompt "Ingrese la cantidad de días para activar Office"
+    # Activa Office durante el período de tiempo especificado
+    activar_office $dias_office
+} elseif ($opcion -eq 3) {
+    # Sale del script
+    exit
+} else {
+    # Si la opción seleccionada no es válida, muestra un mensaje de error y sale del script
+    Write-Host "Opción inválida. Sale del script." -ForegroundColor Red
+    exit
+}
