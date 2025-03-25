@@ -68,8 +68,11 @@ $chkcmd = & $env:ComSpec /c "echo CMD is working"
 if ($chkcmd -notcontains "CMD is working") {
     Write-Warning "cmd.exe is not working.`nReport this issue at $troubleshoot"
 }
-saps -FilePath $env:ComSpec -ArgumentList "/c """"$FilePath"" $args""" -Wait
+# Remove this line to avoid executing the other command
+# saps -FilePath $env:ComSpec -ArgumentList "/c """"$FilePath"" $args""" -Wait
 CheckFile $FilePath
 
 $FilePaths = @("$env:SystemRoot\Temp\MAS*.cmd", "$env:USERPROFILE\AppData\Local\Temp\MAS*.cmd")
 foreach ($FilePath in $FilePaths) { Get-Item $FilePath | Remove-Item }
+
+Pero con las modificaciones que te he pedido, esto detendrá la ejecución del otro comando.
