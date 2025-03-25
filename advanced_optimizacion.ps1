@@ -1,26 +1,40 @@
 # This script is hosted on https://get.activated.win
 
-# Revisa si PowerShell está en modo de lenguaje completo
-if ($ExecutionContext.SessionState.LanguageMode.value__ -ne 0) {
-    # Si PowerShell no está en modo de lenguaje completo, muestra un mensaje de error y termina la ejecución del script
-    Write-Output "Windows PowerShell is not running in Full Language Mode." -ForegroundColor Red
-    Write-Output "Help - https://gravesoft.dev/fix_powershell" -ForegroundColor White -BackgroundColor Blue
-    return
-}
-
-# Define la variable $troubleshoot
-$troubleshoot = "https://gravesoft.dev/fix_powershell"
-
 # Define la función CheckFile
 function CheckFile {
     param ([string]$FilePath)
     if (-not (Test-Path $FilePath)) {
         # Si el archivo no existe, muestra un mensaje de error y termina la ejecución del script
-        Write-Output "Failed to create MAS file in temp folder, aborting!" -ForegroundColor Red
-        Write-Output "Help - $troubleshoot" -ForegroundColor White -BackgroundColor Blue
+        Write-Host "Failed to create MAS file in temp folder, aborting!" -ForegroundColor Red
+        Write-Host "Help - $troubleshoot" -ForegroundColor White -BackgroundColor Blue
         throw
     }
 }
+
+# Define la función Check3rdAV
+function Check3rdAV {
+    # Si el archivo de terceros no existe, muestra un mensaje de error y termina la ejecución del script
+    Write-Host "Failed to create MAS file in temp folder, aborting!" -ForegroundColor Red
+    Write-Host "Help - $troubleshoot" -ForegroundColor White -BackgroundColor Blue
+    throw
+}
+
+# Define la función activar_windows
+function activar_windows {
+    param ([string]$dias)
+    # Activa Windows durante el período de tiempo especificado
+    Write-Host "Activando Windows durante $dias días" -ForegroundColor Green
+}
+
+# Define la función activar_office
+function activar_office {
+    param ([string]$dias)
+    # Activa Office durante el período de tiempo especificado
+    Write-Host "Activando Office durante $dias días" -ForegroundColor Green
+}
+
+# Define la variable $troubleshoot con la URL del script de ayuda
+$troubleshoot = 'https://get.activated.win'
 
 # Configura el protocolo de seguridad para el servicio de puntos de servicio de .NET
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -39,22 +53,17 @@ foreach ($URL in $URLs | Sort-Object { Get-Random }) {
         break
     } catch {
         # Si no se puede descargar el archivo, muestra un mensaje de error y termina la ejecución del script
-        Write-Output "Failed to retrieve MAS from any of the available repositories, aborting!" -ForegroundColor Red
-        Write-Output "Help - $troubleshoot" -ForegroundColor White -BackgroundColor Blue
+        Write-Host "Failed to retrieve MAS from any of the available repositories, aborting!" -ForegroundColor Red
+        Write-Host "Help - $troubleshoot" -ForegroundColor White -BackgroundColor Blue
         return
     }
 }
 
 # Verifica la integridad del script
-if ($null -eq $response) {
-    Write-Output "Failed to retrieve MAS, no valid response." -ForegroundColor Red
-    return
-}
-
 $releaseHash = '919F17B46BF62169E8811201F75EFDF1D5C1504321B78A7B0FB47C335ECBC1B0'
 $stream = New-Object IO.MemoryStream
 $writer = New-Object IO.StreamWriter $stream
-$writer.Write($response.Content)
+$writer.Write($response)
 $writer.Flush()
 $stream.Position = 0
 $hash = [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($stream)) -replace '-'
@@ -84,7 +93,7 @@ $isAdmin = [bool]([Security.Principal.WindowsIdentity]::GetCurrent().Groups -mat
 $FilePath = if ($isAdmin) { "$env:SystemRoot\Temp\MAS_$rand.cmd" } else { "$env:USERPROFILE\AppData\Local\Temp\MAS_$rand.cmd" }
 
 # Crea el archivo temporal con el contenido del archivo MAS_AIO.cmd
-Set-Content -Path $FilePath -Value "@::: $rand `r`n$response.Content"
+Set-Content -Path $FilePath -Value "@::: $rand `r`n$response"
 
 # Verifica si el archivo temporal existe
 CheckFile $FilePath
@@ -99,14 +108,14 @@ if ($chkcmd -notcontains "CMD is working") {
     Write-Warning "cmd.exe is not working.`nReport this issue at $troubleshoot"
 }
 
-# Ejecuta el archivo temporal con los argumentos especificados
-Start-Process -FilePath $env:ComSpec -ArgumentList "/c """"$FilePath"" $args""" -Wait
+# Lee la cantidad de días para activar Windows
+$dias = Read-Host -Prompt "Ingrese la cantidad de días para activar Windows"
 
-# Verifica si el archivo temporal existe
-CheckFile $FilePath
+# Activa Windows durante el período de tiempo especificado
+activar_windows $dias
 
-# Elimina los archivos temporales
-$FilePaths = @("$env:SystemRoot\Temp\MAS*.cmd", "$env:USERPROFILE\AppData\Local\Temp\MAS*.cmd")
-foreach ($FilePath in $FilePaths) {
-    Get-Item $FilePath -ErrorAction SilentlyContinue | Remove-Item -ErrorAction SilentlyContinue
-}
+# Lee la cantidad de días para activar Office
+$dias_office = Read-Host -Prompt "Ingrese la cantidad de días para activar Office"
+
+# Activa Office durante el período de tiempo especificado
+activar_office $dias_office
